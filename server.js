@@ -9,7 +9,7 @@ const path      = require('path');
 const crypto    = require('crypto');
 const { q, getFullState, getColegioState } = require('./db');
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 4010;
 const MONITOR_USER = process.env.MONITOR_USER || 'admin';
 const MONITOR_PASSWORD = process.env.MONITOR_PASSWORD || 'monitor2026';
 const app    = express();
