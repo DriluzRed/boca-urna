@@ -1,0 +1,17 @@
+{
+  "name": "boca-urna-gigabrain",
+  "version": "1.0.0",
+  "description": "Sistema Boca de Urna + Monitor Central — Gigabrain",
+  "main": "server.js",
+  "scripts": {
+    "start": "node --experimental-sqlite server.js",
+    "dev": "node --experimental-sqlite --watch server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.3",
+    "ws": "^8.16.0"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}

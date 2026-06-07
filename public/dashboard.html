@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gigabrain — Dashboard TV</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#07111f;--panel:#0d1b2f;--panel2:#13243c;--line:#233b5d;--text:#f8fafc;--muted:#9fb0c7;--cyan:#1dd8c6;--blue:#4f8cff;--green:#34d399;--yellow:#facc15;--red:#f87171}
+body{min-height:100vh;background:radial-gradient(circle at top left,#163e63 0,#07111f 34%,#050a12 100%);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;overflow:hidden}
+button,select{font-family:inherit}
+.screen{min-height:100vh;display:grid;grid-template-rows:auto 1fr;gap:18px;padding:24px}
+.topbar{display:grid;grid-template-columns:1fr auto;align-items:center;gap:18px}
+.brand{display:flex;align-items:center;gap:18px;min-width:0}
+.mark{width:54px;height:54px;border-radius:14px;background:linear-gradient(135deg,var(--cyan),var(--blue));display:grid;place-items:center;font-size:28px;box-shadow:0 14px 34px rgba(29,216,198,.22)}
+h1{font-size:clamp(28px,3.3vw,58px);font-weight:900;line-height:1;letter-spacing:0}
+.subtitle{margin-top:8px;color:var(--muted);font-size:clamp(13px,1.15vw,20px);font-weight:650}
+.status{display:flex;align-items:center;gap:10px;background:rgba(13,27,47,.82);border:1px solid var(--line);border-radius:14px;padding:12px 16px;font-size:16px;font-weight:800;white-space:nowrap}
+.dot{width:12px;height:12px;border-radius:50%;background:var(--red);box-shadow:0 0 18px var(--red)}
+.dot.on{background:var(--green);box-shadow:0 0 18px var(--green)}
+.gear{position:fixed;right:22px;bottom:22px;z-index:50;width:54px;height:54px;border:1px solid rgba(255,255,255,.18);border-radius:50%;background:rgba(13,27,47,.8);color:var(--text);font-size:24px;cursor:pointer;backdrop-filter:blur(10px)}
+.grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(420px,.85fr);gap:18px;min-height:0}
+.grid.cargo-mode{grid-template-columns:1fr}
+.panel{background:rgba(13,27,47,.78);border:1px solid rgba(148,163,184,.18);border-radius:8px;box-shadow:0 20px 60px rgba(0,0,0,.28);min-width:0}
+.hero{display:grid;grid-template-rows:auto 1fr;gap:16px;padding:18px;min-height:0}
+.cargo-panels{display:none;grid-template-columns:1fr 1fr;gap:18px;min-height:0}
+.cargo-mode .hero,.cargo-mode .side{display:none}
+.cargo-mode .cargo-panels{display:grid}
+.cargo-panel{display:grid;grid-template-rows:auto auto 1fr;gap:14px;padding:18px;min-height:0}
+.cargo-head{display:flex;align-items:center;justify-content:space-between;gap:14px}
+.cargo-title{font-size:clamp(22px,2vw,38px);font-weight:950}
+.cargo-total{text-align:right}
+.cargo-total .num{font-size:clamp(34px,3.8vw,72px);font-weight:950;line-height:.95}
+.cargo-total .lbl{color:var(--muted);font-size:clamp(12px,1vw,18px);font-weight:800;text-transform:uppercase}
+.cargo-summary{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cargo-stat{background:rgba(19,36,60,.9);border:1px solid var(--line);border-radius:8px;padding:12px}
+.cargo-stat .lbl{color:var(--muted);font-size:12px;font-weight:850;text-transform:uppercase}
+.cargo-stat .val{font-size:clamp(22px,2.1vw,40px);font-weight:950;margin-top:4px}
+.cargo-list{display:grid;gap:10px;align-content:start;overflow:hidden}
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.metric{background:rgba(19,36,60,.9);border:1px solid var(--line);border-radius:8px;padding:18px}
+.metric-label{color:var(--muted);font-size:clamp(12px,.95vw,18px);font-weight:800;text-transform:uppercase}
+.metric-value{font-size:clamp(42px,5.8vw,112px);font-weight:950;line-height:.92;margin-top:8px}
+.metric-sub{color:var(--muted);font-size:clamp(12px,1vw,18px);font-weight:700;margin-top:8px}
+.chart-box{min-height:0;height:100%;padding:12px;background:rgba(5,10,18,.28);border:1px solid rgba(148,163,184,.13);border-radius:8px}
+.side{display:grid;grid-template-rows:auto 1fr;gap:14px;padding:18px;min-height:0}
+.section-title{font-size:clamp(18px,1.55vw,30px);font-weight:900}
+.ranking{display:grid;gap:10px;overflow:hidden}
+.rank{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;background:rgba(19,36,60,.86);border:1px solid var(--line);border-radius:8px;padding:14px}
+.rank-pos{font-size:clamp(22px,2.1vw,40px);font-weight:950;color:var(--yellow);width:58px}
+.rank-name{font-size:clamp(18px,1.55vw,32px);font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rank-sub{color:var(--muted);font-size:clamp(12px,1vw,18px);font-weight:700;margin-top:3px}
+.bar{height:8px;background:rgba(255,255,255,.1);border-radius:999px;margin-top:10px;overflow:hidden}
+.bar-fill{height:100%;border-radius:999px}
+.rank-votes{text-align:right}
+.rank-num{font-size:clamp(24px,2.4vw,46px);font-weight:950}
+.rank-pct{color:var(--muted);font-size:clamp(13px,1vw,20px);font-weight:800}
+.empty{height:100%;display:grid;place-items:center;text-align:center;color:var(--muted);font-size:clamp(18px,1.6vw,30px);font-weight:750;padding:40px}
+.drawer{position:fixed;inset:0;background:rgba(3,7,13,.72);z-index:80;display:none;align-items:stretch;justify-content:flex-end}
+.drawer.show{display:flex}
+.drawer-panel{width:min(520px,100vw);background:#f8fafc;color:#0f172a;padding:22px;overflow-y:auto;box-shadow:-20px 0 60px rgba(0,0,0,.38)}
+.drawer-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:16px}
+.drawer h2{font-size:24px;font-weight:900}
+.close{width:42px;height:42px;border-radius:12px;border:none;background:#e2e8f0;color:#0f172a;font-size:22px;cursor:pointer}
+.controls{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.controls select,.controls button{height:44px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;color:#0f172a;font-size:14px;font-weight:750;padding:0 12px}
+.controls button{background:#2563eb;color:#fff;border-color:#2563eb;cursor:pointer}
+.controls button.secondary{background:#e2e8f0;color:#0f172a;border-color:#cbd5e1}
+.pick-list{display:grid;gap:8px}
+.pick{display:grid;grid-template-columns:auto 12px 1fr;gap:10px;align-items:center;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:12px;cursor:pointer}
+.pick input{width:18px;height:18px;accent-color:#2563eb}
+.pick.on{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+.pick-dot{width:12px;height:12px;border-radius:50%}
+.pick-name{font-size:15px;font-weight:850}
+.pick-sub{font-size:12px;color:#64748b;font-weight:650;margin-top:2px}
+@media (max-width:1050px){
+  body{overflow:auto}
+  .screen{min-height:100vh}
+  .grid{grid-template-columns:1fr}
+  .metrics{grid-template-columns:1fr 1fr}
+  .metric:last-child{grid-column:1/-1}
+}
+</style>
+</head>
+<body>
+<main class="screen">
+  <header class="topbar">
+    <div class="brand">
+      <div class="mark">📺</div>
+      <div>
+        <h1>Dashboard TV</h1>
+        <div class="subtitle" id="subtitle">Candidatos seleccionados · Boca de urna en vivo</div>
+      </div>
+    </div>
+    <div class="status"><span class="dot" id="connDot"></span><span id="connText">Conectando</span></div>
+  </header>
+
+  <section class="grid">
+    <div class="panel hero">
+      <div class="metrics">
+        <div class="metric"><div class="metric-label">Boca de urna</div><div class="metric-value" id="totalBU">0</div><div class="metric-sub" id="subBU">0 seleccionados</div></div>
+        <div class="metric"><div class="metric-label">Oficial</div><div class="metric-value" id="totalCO">0</div><div class="metric-sub" id="subCO">0 seleccionados</div></div>
+        <div class="metric"><div class="metric-label">Lidera</div><div class="metric-value" id="liderPct">0%</div><div class="metric-sub" id="liderName">Sin datos</div></div>
+      </div>
+      <div class="chart-box"><canvas id="chartBU"></canvas></div>
+    </div>
+
+    <aside class="panel side">
+      <div class="section-title">Ranking seleccionado</div>
+      <div class="ranking" id="ranking"><div class="empty">Seleccioná candidatos para mostrar el dashboard.</div></div>
+    </aside>
+
+    <div class="cargo-panels" id="cargoPanels"></div>
+  </section>
+</main>
+
+<button class="gear" onclick="toggleDrawer(true)" title="Configurar">⚙</button>
+
+<div class="drawer" id="drawer">
+  <div class="drawer-panel">
+    <div class="drawer-head">
+      <h2>Dashboard TV</h2>
+      <button class="close" onclick="toggleDrawer(false)">×</button>
+    </div>
+    <div class="controls">
+      <select id="cargoFiltro" onchange="renderAll()"></select>
+      <select id="orden" onchange="renderAll()">
+        <option value="bu">Boca de urna</option>
+        <option value="oficial">Conteo oficial</option>
+        <option value="nombre">Nombre</option>
+      </select>
+      <button onclick="seleccionarVisibles()">Seleccionar visibles</button>
+      <button class="secondary" onclick="limpiarSeleccion()">Limpiar</button>
+    </div>
+    <div class="pick-list" id="picker"></div>
+  </div>
+</div>
+
+<script>
+let colegios={},candidatos=[],bocaUrna={},conteoDetalle={},chartBU=null,ws=null;
+const storageKey='gb_tv_dashboard_candidatos';
+let seleccion=new Set(JSON.parse(localStorage.getItem(storageKey)||'[]'));
+
+function conectarWS(){
+  const proto=location.protocol==='https:'?'wss':'ws';
+  ws=new WebSocket(`${proto}://${location.host}`);
+  ws.onopen=()=>setConn(true);
+  ws.onclose=()=>{setConn(false);setTimeout(conectarWS,3000);};
+  ws.onerror=()=>{};
+  ws.onmessage=e=>{try{aplicarMensaje(JSON.parse(e.data));}catch(err){console.error(err);}};
+}
+function setConn(on){
+  document.getElementById('connDot').classList.toggle('on',on);
+  document.getElementById('connText').textContent=on?'En vivo':'Sin conexión';
+}
+function aplicarMensaje(msg){
+  if(msg.type==='init'||msg.type==='full'){
+    colegios=msg.data.colegios||{};
+    candidatos=Object.entries(msg.data.candidatos||{}).map(([id,c])=>({id,...c}));
+    bocaUrna=msg.data.bocaUrna||{};
+    conteoDetalle=msg.data.conteoDetalle||{};
+    sanearSeleccion();
+    renderAll();
+    return;
+  }
+  if(msg.type==='candidatos'){
+    candidatos=Object.entries(msg.data||{}).map(([id,c])=>({id,...c}));
+    sanearSeleccion();
+    renderAll();
+    return;
+  }
+  if(msg.type==='colegios'){colegios=msg.data||{};return;}
+  if(msg.type==='voto_bu'){bocaUrna[msg.colegioId]=msg.data||{};renderAll();return;}
+  if(msg.type==='voto_oficial'){conteoDetalle[msg.colegioId]=msg.data||{};renderAll();}
+}
+function votosBU(){
+  const out={};
+  Object.values(bocaUrna).forEach(col=>{
+    if(!col||typeof col!=='object')return;
+    Object.entries(col).forEach(([id,v])=>{out[id]=(out[id]||0)+(typeof v==='number'?v:0);});
+  });
+  return out;
+}
+function votosOficial(){
+  const out={};
+  Object.values(conteoDetalle).forEach(col=>{
+    if(!col||typeof col!=='object')return;
+    Object.entries(col).forEach(([id,mesas])=>{
+      if(!mesas||typeof mesas!=='object')return;
+      Object.values(mesas).forEach(v=>{out[id]=(out[id]||0)+(typeof v==='number'?v:0);});
+    });
+  });
+  return out;
+}
+function guardar(){localStorage.setItem(storageKey,JSON.stringify([...seleccion]));}
+function sanearSeleccion(){
+  const ids=new Set(candidatos.map(c=>c.id));
+  let cambio=false;
+  [...seleccion].forEach(id=>{if(!ids.has(id)){seleccion.delete(id);cambio=true;}});
+  if(cambio)guardar();
+}
+function cargoActual(){return document.getElementById('cargoFiltro').value||'todos';}
+function visibles(){const cargo=cargoActual();return candidatos.filter(c=>cargo==='todos'||c.cargo===cargo);}
+function seleccionados(){return candidatos.filter(c=>seleccion.has(c.id));}
+function seleccionadosParaVista(){
+  const cargo=cargoActual();
+  return seleccionados().filter(c=>cargo==='todos'||c.cargo===cargo);
+}
+function ordenar(lista,vbu,vco){
+  const modo=document.getElementById('orden').value;
+  return [...lista].sort((a,b)=>{
+    if(modo==='oficial')return (vco[b.id]||0)-(vco[a.id]||0);
+    if(modo==='nombre')return a.nombre.localeCompare(b.nombre,'es');
+    return (vbu[b.id]||0)-(vbu[a.id]||0);
+  });
+}
+function renderFiltros(){
+  const sel=document.getElementById('cargoFiltro');
+  const actual=sel.value||'todos';
+  const cargos=[...new Set(candidatos.map(c=>c.cargo))];
+  sel.innerHTML='<option value="todos">Todos los cargos</option>'+cargos.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  sel.value=cargos.includes(actual)||actual==='todos'?actual:'todos';
+}
+function renderPicker(vbu,vco){
+  const area=document.getElementById('picker');
+  const items=visibles();
+  if(!candidatos.length){area.innerHTML='<div class="pick-sub">No hay candidatos creados.</div>';return;}
+  area.innerHTML=items.map(c=>{
+    const on=seleccion.has(c.id);
+    return `<label class="pick ${on?'on':''}">
+      <input type="checkbox" ${on?'checked':''} onchange="toggleCand('${c.id}')">
+      <span class="pick-dot" style="background:${colorHex(c.partido)}"></span>
+      <span><div class="pick-name">${esc(c.nombre)}</div><div class="pick-sub">${esc(c.partido)} · ${esc(c.cargo)} · BU ${vbu[c.id]||0} · Oficial ${vco[c.id]||0}</div></span>
+    </label>`;
+  }).join('');
+}
+function esCargo(cargo,busqueda){
+  return String(cargo||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').includes(busqueda);
+}
+function cargosPrincipales(lista){
+  const cargos=[...new Set(lista.map(c=>c.cargo))];
+  const intendente=cargos.find(c=>esCargo(c,'intendente'));
+  const concejal=cargos.find(c=>esCargo(c,'concejal'));
+  return [intendente,concejal].filter(Boolean);
+}
+function renderAll(){
+  renderFiltros();
+  const vbu=votosBU(),vco=votosOficial();
+  renderPicker(vbu,vco);
+  const lista=ordenar(seleccionadosParaVista(),vbu,vco);
+  const modoTodos=cargoActual()==='todos';
+  document.querySelector('.grid').classList.toggle('cargo-mode',modoTodos);
+  const totalBU=lista.reduce((a,c)=>a+(vbu[c.id]||0),0);
+  const totalCO=lista.reduce((a,c)=>a+(vco[c.id]||0),0);
+  document.getElementById('totalBU').textContent=totalBU;
+  document.getElementById('totalCO').textContent=totalCO;
+  document.getElementById('subBU').textContent=`${lista.length} seleccionados`;
+  document.getElementById('subCO').textContent=`${Object.keys(colegios).length} colegios`;
+  const lider=lista[0];
+  const liderV=lider?(vbu[lider.id]||0):0;
+  const liderPct=totalBU>0?((liderV/totalBU)*100).toFixed(1):'0.0';
+  document.getElementById('liderPct').textContent=liderPct+'%';
+  document.getElementById('liderName').textContent=lider?lider.nombre:'Sin datos';
+  document.getElementById('subtitle').textContent=`${new Date().toLocaleTimeString('es-PY')} · ${lista.length} candidatos seleccionados`;
+  if(modoTodos){
+    if(chartBU){chartBU.destroy();chartBU=null;}
+    renderCargoPanels(lista,vbu,vco);
+  }else{
+    renderChart(lista,vbu,totalBU);
+    renderRanking(lista,vbu,totalBU);
+  }
+}
+function renderChart(lista,vbu,total){
+  const ctx=document.getElementById('chartBU');
+  if(chartBU){chartBU.destroy();chartBU=null;}
+  chartBU=new Chart(ctx,{type:'bar',data:{labels:lista.map(c=>c.nombre),datasets:[{data:lista.map(c=>vbu[c.id]||0),backgroundColor:lista.map(c=>colorHex(c.partido)),borderRadius:8,barPercentage:.74,categoryPercentage:.72}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>{const pct=total>0?((ctx.raw/total)*100).toFixed(1):0;return ` ${ctx.raw} votos (${pct}%)`;}}}},scales:{x:{ticks:{color:'#dbeafe',font:{size:18,weight:'bold'},maxRotation:0,minRotation:0},grid:{display:false}},y:{beginAtZero:true,ticks:{color:'#9fb0c7',font:{size:16,weight:'bold'}},grid:{color:'rgba(159,176,199,.14)'}}}}});
+}
+function renderRanking(lista,vbu,total){
+  const area=document.getElementById('ranking');
+  if(!lista.length){area.innerHTML='<div class="empty">Seleccioná candidatos para mostrar el dashboard.</div>';return;}
+  const max=Math.max(...lista.map(c=>vbu[c.id]||0),1);
+  area.innerHTML=lista.slice(0,8).map((c,i)=>{
+    const v=vbu[c.id]||0,pct=total>0?((v/total)*100).toFixed(1):'0.0',w=((v/max)*100).toFixed(1);
+    return `<div class="rank">
+      <div class="rank-pos">#${i+1}</div>
+      <div><div class="rank-name">${esc(c.nombre)}</div><div class="rank-sub">${esc(c.partido)} · ${esc(c.cargo)}</div><div class="bar"><div class="bar-fill" style="width:${w}%;background:${colorHex(c.partido)}"></div></div></div>
+      <div class="rank-votes"><div class="rank-num">${v}</div><div class="rank-pct">${pct}%</div></div>
+    </div>`;
+  }).join('');
+}
+function renderCargoPanels(lista,vbu,vco){
+  const area=document.getElementById('cargoPanels');
+  const cargos=cargosPrincipales(lista);
+  if(!lista.length){area.innerHTML='<div class="panel cargo-panel"><div class="empty">Seleccioná candidatos para mostrar el dashboard.</div></div>';return;}
+  if(!cargos.length){area.innerHTML='<div class="panel cargo-panel"><div class="empty">Seleccioná candidatos de Intendente y Concejal.</div></div>';return;}
+  area.innerHTML=cargos.map(cargo=>{
+    const grupo=ordenar(lista.filter(c=>c.cargo===cargo),vbu,vco);
+    const totalBU=grupo.reduce((a,c)=>a+(vbu[c.id]||0),0);
+    const totalCO=grupo.reduce((a,c)=>a+(vco[c.id]||0),0);
+    const lider=grupo[0];
+    const liderV=lider?(vbu[lider.id]||0):0;
+    const liderPct=totalBU>0?((liderV/totalBU)*100).toFixed(1):'0.0';
+    return `<section class="panel cargo-panel">
+      <div class="cargo-head">
+        <div class="cargo-title">${esc(cargo)}</div>
+        <div class="cargo-total"><div class="num">${totalBU}</div><div class="lbl">Boca de urna</div></div>
+      </div>
+      <div class="cargo-summary">
+        <div class="cargo-stat"><div class="lbl">Oficial</div><div class="val">${totalCO}</div></div>
+        <div class="cargo-stat"><div class="lbl">Lidera</div><div class="val">${lider?liderPct+'%':'0%'}</div></div>
+      </div>
+      <div class="cargo-list">${renderCargoRanks(grupo,vbu,totalBU)}</div>
+    </section>`;
+  }).join('');
+}
+function renderCargoRanks(grupo,vbu,total){
+  if(!grupo.length)return '<div class="empty">Sin seleccionados para este cargo.</div>';
+  const max=Math.max(...grupo.map(c=>vbu[c.id]||0),1);
+  return grupo.slice(0,6).map((c,i)=>{
+    const v=vbu[c.id]||0,pct=total>0?((v/total)*100).toFixed(1):'0.0',w=((v/max)*100).toFixed(1);
+    return `<div class="rank">
+      <div class="rank-pos">#${i+1}</div>
+      <div><div class="rank-name">${esc(c.nombre)}</div><div class="rank-sub">${esc(c.partido)}</div><div class="bar"><div class="bar-fill" style="width:${w}%;background:${colorHex(c.partido)}"></div></div></div>
+      <div class="rank-votes"><div class="rank-num">${v}</div><div class="rank-pct">${pct}%</div></div>
+    </div>`;
+  }).join('');
+}
+function toggleCand(id){seleccion.has(id)?seleccion.delete(id):seleccion.add(id);guardar();renderAll();}
+function seleccionarVisibles(){visibles().forEach(c=>seleccion.add(c.id));guardar();renderAll();}
+function limpiarSeleccion(){seleccion.clear();guardar();renderAll();}
+function toggleDrawer(show){document.getElementById('drawer').classList.toggle('show',show);}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function colorHex(p){const s=(p||'').toLowerCase();if(s.includes('anr')||s.includes('colorado'))return'#ef4444';if(s.includes('plra')||s.includes('liberal'))return'#3b82f6';if(s.includes('frente')||s.includes('pfd'))return'#22c55e';if(s.includes('pq')||s.includes('patria'))return'#f97316';if(s.includes('cruzada'))return'#a855f7';return'#94a3b8';}
+
+document.addEventListener('keydown',e=>{if(e.key==='Escape')toggleDrawer(false);if(e.key.toLowerCase()==='f'){document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen?.();}});
+conectarWS();
+toggleDrawer(true);
+</script>
+</body>
+</html>

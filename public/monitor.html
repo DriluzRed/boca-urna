@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<title>Gigabrain — Monitor Central v5.0</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--primary:#003b8e;--accent:#00c2b8;--bg:#f0f4fb;--card:#ffffff;--text:#1a1a2e;--muted:#6b7280;--border:#e2e8f0;--red:#e53e3e;--green:#00b894;--blue:#2563eb;--orange:#f97316;--shadow-md:0 2px 8px rgba(0,0,0,0.06);--radius:16px;--radius-sm:12px}
+.dark{--bg:#0f172a;--card:#1e293b;--text:#f1f5f9;--muted:#94a3b8;--border:#334155}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;padding-bottom:80px;transition:background 0.2s,color 0.2s}
+header{background:linear-gradient(135deg,#00072d 0%,#003b8e 50%,#0077b6 100%);color:#fff;padding:18px 16px 22px;border-radius:0 0 28px 28px;box-shadow:0 6px 20px rgba(0,20,60,0.25)}
+.header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+header h1{font-size:22px;font-weight:800;letter-spacing:-0.5px}
+.conn-badge{font-size:10px;font-weight:700;padding:4px 12px;border-radius:99px;background:rgba(255,255,255,.12)}
+.conn-on{background:rgba(0,184,148,.35);color:#a7f3d0}.conn-off{background:rgba(229,62,62,.35);color:#fca5a5}
+.header-sub{font-size:12px;opacity:.7;margin-top:4px}
+.last-update{font-size:10px;opacity:.6;margin-top:4px}
+.container{padding:16px 14px;max-width:600px;margin:0 auto}
+.tab-content{display:none;animation:fadeIn 0.25s ease}.tab-content.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.card{background:var(--card);border-radius:var(--radius);padding:18px;margin-bottom:16px;box-shadow:var(--shadow-md);border:1px solid var(--border)}
+.card-title{font-size:15px;font-weight:700;color:var(--primary);margin-bottom:14px;display:flex;align-items:center;gap:10px}
+.dark .card-title{color:var(--accent)}
+input,select{width:100%;padding:12px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--bg);color:var(--text);font-size:14px;margin-bottom:12px;outline:none;transition:all 0.2s}
+input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,194,184,.12)}
+button{border:none;border-radius:var(--radius-sm);padding:12px 18px;cursor:pointer;font-size:14px;font-weight:600;transition:all 0.15s}
+button:active{transform:scale(0.97)}
+.btn-primary{background:var(--blue);color:white;width:100%}.btn-green{background:var(--green);color:white}
+.btn-red{background:var(--red);color:white}.btn-gray{background:#64748b;color:white}.btn-full{width:100%}
+.chip-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.chip{padding:6px 16px;border-radius:99px;font-size:12px;font-weight:600;background:var(--border);color:var(--text);cursor:pointer;transition:all 0.2s ease}
+.chip:hover{opacity:.8;transform:translateY(-1px)}.chip.active{background:var(--primary);color:white;box-shadow:0 2px 6px rgba(0,59,142,.3)}
+.dark .chip.active{background:var(--accent);color:#0f172a}
+.total-box{background:linear-gradient(135deg,var(--primary),var(--accent));color:white;padding:20px;border-radius:var(--radius);text-align:center;margin-bottom:16px}
+.total-box .tb-label{font-size:11px;opacity:.8;letter-spacing:.5px;font-weight:600}
+.total-box .tb-value{font-size:44px;font-weight:800;line-height:1.1;margin:6px 0}.total-box .tb-sub{font-size:11px;opacity:.75}
+.summary-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.summary-card{background:var(--card);border-radius:var(--radius-sm);padding:14px;text-align:center;box-shadow:var(--shadow-md);border:1px solid var(--border)}
+.sc-label{font-size:10px;color:var(--muted);font-weight:700;letter-spacing:.5px;margin-bottom:4px}
+.sc-value{font-size:32px;font-weight:800;color:var(--primary)}.dark .sc-value{color:var(--accent)}
+.sc-sub{font-size:10px;color:var(--muted);margin-top:2px}
+.part-box{background:linear-gradient(135deg,#1e3a5f,#00897b);color:white;padding:20px;border-radius:var(--radius);margin-bottom:16px}
+.part-box .pb-label{font-size:11px;opacity:.8;font-weight:600;letter-spacing:.5px;margin-bottom:4px}
+.part-box .pb-value{font-size:42px;font-weight:800;line-height:1}
+.part-box .pb-sub{font-size:12px;opacity:.75;margin-top:6px}
+.prog-wrap{background:rgba(0,0,0,.2);border-radius:99px;height:8px;margin-top:14px;overflow:hidden}
+.prog-fill{height:100%;border-radius:99px;background:rgba(255,255,255,.9);transition:width 0.4s ease}
+.rank-item{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--bg);border-radius:var(--radius-sm);margin-bottom:8px}
+.rank-num{font-size:18px;font-weight:800;width:32px;color:var(--muted)}.rank-num.f{color:#f59e0b}.rank-num.s{color:#94a3b8}.rank-num.t{color:#b45309}
+.rank-info{flex:1}.rank-name{font-size:13px;font-weight:700}.rank-sub{font-size:11px;color:var(--muted)}
+.rank-bar-wrap{height:4px;background:var(--border);border-radius:99px;margin-top:6px;overflow:hidden}
+.rank-bar-fill{height:100%;border-radius:99px;transition:width 0.3s}
+.rank-nums{text-align:right}.rank-v{font-size:16px;font-weight:800;color:var(--primary)}.dark .rank-v{color:var(--accent)}
+.rank-p{font-size:11px;color:var(--muted)}
+.dif-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.dif-card{padding:14px;border-radius:var(--radius-sm);text-align:center}
+.dc-lbl{font-size:10px;color:var(--muted);margin-bottom:4px}.dc-pct{font-size:28px;font-weight:800}.dc-v{font-size:11px;color:var(--muted)}
+.dif-resultado{background:#fef9c3;border-radius:var(--radius-sm);padding:12px;text-align:center;font-size:13px;font-weight:600}
+.dark .dif-resultado{background:#3b3200;color:#fde68a}
+.col-card{background:var(--card);border-radius:var(--radius);padding:16px;margin-bottom:12px;box-shadow:var(--shadow-md);border-left:4px solid var(--border)}
+.col-card.activo{border-left-color:var(--green)}
+.col-header{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.col-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.col-nombre{font-size:14px;font-weight:700;flex:1}
+.status-badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:99px}
+.sb-green{background:#dcfce7;color:#166534}.sb-gray{background:#f1f5f9;color:#64748b}
+.dark .sb-green{background:rgba(34,197,94,.15);color:#86efac}.dark .sb-gray{background:#334155;color:#94a3b8}
+.mini-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.mini-stat{background:var(--bg);border-radius:10px;padding:10px;text-align:center}
+.ms-lbl{font-size:10px;color:var(--muted);font-weight:600}.ms-val{font-size:20px;font-weight:800;color:var(--primary);margin-top:3px}
+.dark .ms-val{color:var(--accent)}
+.cand-mini-row{display:flex;align-items:center;gap:10px;padding:6px 0;border-top:1px solid var(--border)}
+.cand-mini-row:first-child{border-top:none}
+.cfg-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg);border-radius:10px;margin-bottom:8px}
+.cfg-info{flex:1}.cfg-name{font-size:13px;font-weight:700}.cfg-sub{font-size:11px;color:var(--muted)}
+.alert{padding:12px 15px;border-radius:var(--radius-sm);font-size:13px;margin-bottom:16px;line-height:1.5}
+.alert-info{background:#eff6ff;color:#1d4ed8;border-left:3px solid #2563eb}
+.alert-green{background:#f0fdf4;color:#166534;border-left:3px solid #22c55e}
+.dark .alert-info{background:rgba(37,99,235,.12);color:#93c5fd}
+.dark .alert-green{background:rgba(34,197,94,.1);color:#86efac}
+.inf-out{background:#f8fafc;border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;font-family:'Courier New',monospace;font-size:11px;white-space:pre-wrap;color:var(--text);line-height:1.6;max-height:400px;overflow-y:auto}
+.dark .inf-out{background:#0f172a}
+.sum-table{width:100%;border-collapse:collapse}
+.sum-table th{font-size:11px;text-align:left;color:var(--muted);padding:8px;border-bottom:1px solid var(--border);font-weight:600}
+.sum-table td{padding:10px 8px;font-size:13px;border-bottom:1px solid var(--bg)}.sum-table .td-pct{font-weight:700;color:var(--primary)}
+.dark .sum-table .td-pct{color:var(--accent)}
+.school-row{display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:16px}
+.school-meta{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;font-size:12px;color:var(--muted);line-height:1.45;margin-bottom:12px}
+.school-meta strong{color:var(--text)}
+.empty-msg{color:var(--muted);font-size:13px;text-align:center;padding:24px 16px}
+.spinner{border:3px solid var(--border);border-top:3px solid var(--accent);border-radius:50%;width:30px;height:30px;animation:spin 0.8s linear infinite;margin:20px auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+.live-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#00b894;margin-right:6px;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.text-muted{color:var(--muted)}.text-center{text-align:center}.mt-2{margin-top:8px}
+footer{position:fixed;bottom:0;left:0;width:100%;background:var(--card);border-top:1px solid var(--border);display:flex;justify-content:space-around;padding:8px 6px 12px;box-shadow:0 -4px 12px rgba(0,0,0,.08);z-index:100}
+.dark footer{border-color:#334155}
+.nav-btn{display:flex;flex-direction:column;align-items:center;gap:3px;background:none;color:var(--muted);font-size:10px;font-weight:600;padding:8px 10px;border-radius:var(--radius-sm);min-width:60px;transition:all 0.15s}
+.nav-btn .ni{font-size:20px}.nav-btn.active{color:var(--primary);background:rgba(0,59,142,.08)}
+.dark .nav-btn.active{color:var(--accent);background:rgba(0,194,184,.12)}
+#gb-toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:#1e293b;color:#f1f5f9;padding:12px 22px;border-radius:99px;font-size:13px;font-weight:600;z-index:9999;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,.25);max-width:88vw;text-align:center}
+#gb-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#gb-modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9998;align-items:center;justify-content:center}
+#gb-modal-overlay.show{display:flex}
+#gb-modal-box{background:var(--card);border-radius:20px;padding:24px 20px 16px;width:88vw;max-width:360px;box-shadow:0 8px 32px rgba(0,0,0,.2)}
+#gb-modal-msg{font-size:14px;color:var(--text);margin-bottom:20px;line-height:1.5}
+#gb-modal-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#gb-modal-btns button{padding:12px;border-radius:12px;font-size:14px;font-weight:700}
+#gb-modal-cancel{background:var(--border);color:var(--text)}#gb-modal-ok{background:var(--red);color:white}
+</style>
+</head>
+<body>
+<div id="gb-toast"></div>
+<div id="gb-modal-overlay">
+  <div id="gb-modal-box">
+    <div id="gb-modal-msg"></div>
+    <div id="gb-modal-btns">
+      <button id="gb-modal-cancel" onclick="gbModalClose(false)">Cancelar</button>
+      <button id="gb-modal-ok" onclick="gbModalClose(true)">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<header>
+  <div class="header-top">
+    <h1>📡 Monitor Central</h1>
+    <div class="conn-badge conn-off" id="connBadge">🔴 Conectando...</div>
+  </div>
+  <div class="header-sub">Gigabrain — Vista consolidada de todos los colegios</div>
+  <div class="last-update" id="lastUpdate">Esperando datos...</div>
+</header>
+
+<div class="container">
+
+<!-- TAB 1: BOCA DE URNA CONSOLIDADA -->
+<div id="tab-bocaUrna" class="tab-content active">
+  <div class="alert alert-info"><span class="live-dot"></span> <strong>Boca de Urna Consolidada</strong> — Total de TODOS los colegios</div>
+  <div class="summary-cards">
+    <div class="summary-card"><div class="sc-label">🗳️ TOTAL VOTOS CONSULTADOS</div><div class="sc-value" id="totalVotosGlobal">0</div><div class="sc-sub">todos los colegios</div></div>
+    <div class="summary-card"><div class="sc-label">🏫 COLEGIOS ACTIVOS</div><div class="sc-value" id="totalColegiosActivos">0</div><div class="sc-sub" id="totalColegiosSub">de 0 configurados</div></div>
+  </div>
+  <div class="part-box" id="bu-partBox" style="display:none;">
+    <div class="pb-label">PARTICIPACIÓN ESTIMADA TOTAL</div>
+    <div class="pb-value" id="bu-partVal">0%</div>
+    <div class="pb-sub" id="bu-partDetail"></div>
+    <div class="prog-wrap"><div class="prog-fill" id="bu-partBar" style="width:0%"></div></div>
+  </div>
+  <div class="chip-row" id="bu-cargos"></div>
+  <div class="total-box"><div class="tb-label" id="bu-cargoLbl">CARGO</div><div class="tb-value" id="bu-total">0</div><div class="tb-sub">votos en boca de urna (todos los colegios)</div></div>
+  <div class="card"><div class="card-title">📊 Gráfico de votos</div><canvas id="bu-grafico" height="220"></canvas></div>
+  <div class="card"><div class="card-title">🏅 Ranking con porcentajes</div><div id="bu-ranking"></div></div>
+  <div class="card"><div class="card-title">⚡ Diferencia entre candidatos</div><div id="bu-dif"></div></div>
+</div>
+
+<!-- TAB 2: CONTEO OFICIAL CONSOLIDADO -->
+<div id="tab-conteoOficial" class="tab-content">
+  <div class="alert alert-green"><span class="live-dot"></span> <strong>Conteo Oficial Consolidado</strong> — Total de TODOS los colegios</div>
+  <div class="summary-cards">
+    <div class="summary-card"><div class="sc-label">🧮 TOTAL VOTOS OFICIALES</div><div class="sc-value" id="totalVotosOficialGlobal">0</div><div class="sc-sub">todos los colegios</div></div>
+    <div class="summary-card"><div class="sc-label">🏫 COLEGIOS REPORTANDO</div><div class="sc-value" id="totalColegiosOficial">0</div><div class="sc-sub" id="totalColegiosOficialSub">con datos oficiales</div></div>
+  </div>
+  <div class="chip-row" id="co-cargos"></div>
+  <div class="total-box"><div class="tb-label" id="co-cargoLbl">CARGO</div><div class="tb-value" id="co-total">0</div><div class="tb-sub">conteo final: suma oficial de todos los colegios</div></div>
+  <div class="card"><div class="card-title">📊 Gráfico de votos oficiales</div><canvas id="co-grafico" height="220"></canvas></div>
+  <div class="card"><div class="card-title">🏅 Ranking oficial</div><div id="co-ranking"></div></div>
+  <div class="card"><div class="card-title">⚡ Diferencia entre candidatos (oficial)</div><div id="co-dif"></div></div>
+  <div class="part-box" id="co-partBox" style="display:none;">
+    <div class="pb-label">PARTICIPACIÓN OFICIAL TOTAL</div>
+    <div class="pb-value" id="co-partVal">0%</div>
+    <div class="pb-sub" id="co-partDetail"></div>
+    <div class="prog-wrap"><div class="prog-fill" id="co-partBar" style="width:0%"></div></div>
+  </div>
+</div>
+
+<!-- TAB 3: CONTEO POR COLEGIO -->
+<div id="tab-conteoColegio" class="tab-content">
+  <div class="alert alert-green"><span class="live-dot"></span> <strong>Conteo por colegio</strong> — El resultado final se consolida desde estos conteos oficiales.</div>
+  <div class="card">
+    <div class="card-title">🏫 Colegio / Local</div>
+    <div class="school-row"><select id="ccol-select" onchange="setColegioConteo(this.value)"></select></div>
+    <div class="school-meta" id="ccol-meta">Seleccione un colegio para ver su conteo.</div>
+  </div>
+  <div class="summary-cards">
+    <div class="summary-card"><div class="sc-label">🧮 VOTOS OFICIALES</div><div class="sc-value" id="ccol-total">0</div><div class="sc-sub" id="ccol-totalSub">colegio seleccionado</div></div>
+    <div class="summary-card"><div class="sc-label">📋 MESAS CON DATOS</div><div class="sc-value" id="ccol-mesas">0</div><div class="sc-sub" id="ccol-mesasSub">mesas reportadas</div></div>
+  </div>
+  <div class="chip-row" id="ccol-cargos"></div>
+  <div class="total-box"><div class="tb-label" id="ccol-cargoLbl">CARGO</div><div class="tb-value" id="ccol-cargoTotal">0</div><div class="tb-sub">votos oficiales del colegio seleccionado</div></div>
+  <div class="card"><div class="card-title">📊 Gráfico por colegio</div><canvas id="ccol-grafico" height="220"></canvas></div>
+  <div class="card"><div class="card-title">🏅 Ranking por colegio</div><div id="ccol-ranking"></div></div>
+  <div class="card"><div class="card-title">⚡ Diferencia por colegio</div><div id="ccol-dif"></div></div>
+  <div class="card"><div class="card-title">🏫 Resumen de colegios</div><div id="ccol-resumenGlobal"></div></div>
+</div>
+
+<!-- TAB 4: COLEGIOS -->
+<div id="tab-colegios" class="tab-content">
+  <div class="alert alert-green"><span class="live-dot"></span> <strong>Actualización en tiempo real.</strong> Cada colegio aparece activo cuando registra votos.</div>
+  <div id="col-lista"><div class="spinner"></div></div>
+</div>
+
+<!-- TAB 5: CONFIGURAR -->
+<div id="tab-configurar" class="tab-content">
+  <div class="alert alert-info">Lo que configure aquí se sincroniza automáticamente con todos los operadores.</div>
+  <div class="card">
+    <div class="card-title">🏫 Colegios / Locales de votación</div>
+    <div id="cfg-listaColegios"></div>
+    <div style="margin:12px 0 8px;font-size:11px;font-weight:700;color:var(--muted);">AGREGAR COLEGIO</div>
+    <input type="text" id="cfg-colNombre" placeholder="Nombre del colegio / local">
+    <button class="btn-green btn-full" onclick="agregarColegio()">+ Agregar colegio</button>
+  </div>
+  <div class="card">
+    <div class="card-title">🧑‍💼 Candidatos</div>
+    <div id="cfg-listaCands"></div>
+    <div style="margin:12px 0 8px;font-size:11px;font-weight:700;color:var(--muted);">AGREGAR CANDIDATO</div>
+    <input type="text" id="cfg-candPartido" placeholder="Partido político (ej: ANR, PLRA)">
+    <input type="text" id="cfg-candNombre" placeholder="Nombre del candidato">
+    <select id="cfg-candCargo">
+      <option value="">Seleccione cargo</option>
+      <option>Intendente</option><option>Concejal</option>
+      <option>Gobernador</option><option>Presidente</option>
+      <option>Diputado</option><option>Senador</option>
+    </select>
+    <button class="btn-primary" onclick="agregarCandidato()">+ Agregar candidato</button>
+  </div>
+  <div class="card">
+    <div class="card-title">⚙️ Opciones</div>
+    <button class="btn-gray btn-full" onclick="toggleDark()" style="margin-bottom:10px;">🌙 Modo oscuro</button>
+    <button class="btn-red btn-full" onclick="reiniciarTodo()">🗑️ Reiniciar sistema completo</button>
+  </div>
+</div>
+
+<!-- TAB 6: INFORMES -->
+<div id="tab-informes" class="tab-content">
+  <div class="card">
+    <div class="card-title">📑 Informe global consolidado</div>
+    <div class="alert alert-info">Genera un informe con los resultados de <strong>todos los colegios sumados</strong>.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <button class="btn-green" onclick="generarInformeBocaUrna()">📸 Boca de Urna</button>
+      <button class="btn-primary" onclick="generarInformeOficial()">📋 Conteo Oficial</button>
+    </div>
+    <div id="inf-area"></div>
+  </div>
+</div>
+
+</div><!-- /container -->
+
+<footer>
+  <button class="nav-btn active" id="nav-bocaUrna" onclick="showTab('bocaUrna')"><span class="ni">🗳️</span><span>Boca Urna</span></button>
+  <button class="nav-btn" id="nav-conteoOficial" onclick="showTab('conteoOficial')"><span class="ni">🧮</span><span>C. Oficial</span></button>
+  <button class="nav-btn" id="nav-conteoColegio" onclick="showTab('conteoColegio')"><span class="ni">🏫</span><span>Por colegio</span></button>
+  <button class="nav-btn" id="nav-colegios" onclick="showTab('colegios')"><span class="ni">🏫</span><span>Colegios</span></button>
+  <button class="nav-btn" id="nav-configurar" onclick="showTab('configurar')"><span class="ni">⚙️</span><span>Configurar</span></button>
+  <button class="nav-btn" id="nav-informes" onclick="showTab('informes')"><span class="ni">📑</span><span>Informes</span></button>
+</footer>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   TOAST & MODAL
+═══════════════════════════════════════════════════════════════ */
+let _toastTimer;
+function gbToast(msg,dur=2800){const el=document.getElementById('gb-toast');el.textContent=msg;el.classList.add('show');clearTimeout(_toastTimer);_toastTimer=setTimeout(()=>el.classList.remove('show'),dur);}
+let _modalResolve=null;
+function gbConfirm(msg){return new Promise(r=>{_modalResolve=r;document.getElementById('gb-modal-msg').textContent=msg;document.getElementById('gb-modal-overlay').classList.add('show');})}
+function gbModalClose(r){document.getElementById('gb-modal-overlay').classList.remove('show');if(_modalResolve){_modalResolve(r);_modalResolve=null;}}
+
+/* ═══════════════════════════════════════════════════════════════
+   API CLIENT
+═══════════════════════════════════════════════════════════════ */
+async function apiReq(method,path,body){
+  const opts={method,headers:{'Content-Type':'application/json'}};
+  if(body!==undefined)opts.body=JSON.stringify(body);
+  const r=await fetch(path,opts);
+  if(!r.ok)throw new Error(await r.text());
+  return r.json();
+}
+const API={
+  addColegio:(nombre)=>apiReq('POST','/api/colegios',{nombre}),
+  delColegio:(id)=>apiReq('DELETE',`/api/colegios/${id}`),
+  addCandidato:(p,n,c)=>apiReq('POST','/api/candidatos',{partido:p,nombre:n,cargo:c}),
+  delCandidato:(id)=>apiReq('DELETE',`/api/candidatos/${id}`),
+  reiniciarTodo:()=>apiReq('DELETE','/api/reiniciar-todo'),
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   ESTADO GLOBAL
+═══════════════════════════════════════════════════════════════ */
+let colegios={};
+let candidatos=[];
+let bocaUrna={};
+let conteoDetalle={};
+let configOficial={};
+let monitoreo={};
+let filtroBU=null;
+let filtroCO=null;
+let filtroColegioCO=null;
+let colegioConteoId=null;
+let graficoBU=null;
+let graficoCO=null;
+let graficoColegioCO=null;
+const TOTAL_HABILITADOS_GENERAL=16229;
+
+/* ═══════════════════════════════════════════════════════════════
+   WEBSOCKET
+═══════════════════════════════════════════════════════════════ */
+let ws;
+function conectarWS(){
+  const proto=location.protocol==='https:'?'wss':'ws';
+  ws=new WebSocket(`${proto}://${location.host}`);
+  ws.onopen=()=>{document.getElementById('connBadge').textContent='🟢 En vivo';document.getElementById('connBadge').className='conn-badge conn-on';};
+  ws.onclose=()=>{document.getElementById('connBadge').textContent='🔴 Sin conexión';document.getElementById('connBadge').className='conn-badge conn-off';setTimeout(conectarWS,3000);};
+  ws.onmessage=(e)=>{try{aplicarMensaje(JSON.parse(e.data));}catch(err){console.error('[WS]',err);}};
+  ws.onerror=()=>{};
+}
+
+function aplicarMensaje(msg){
+  const ts=new Date().toLocaleTimeString('es-PY');
+  document.getElementById('lastUpdate').textContent='Última actualización: '+ts;
+
+  switch(msg.type){
+    case 'init':
+    case 'full':
+      colegios=msg.data.colegios||{};
+      const cd=msg.data.candidatos||{};
+      candidatos=Object.entries(cd).map(([id,c])=>({id,...c}));
+      bocaUrna=msg.data.bocaUrna||{};
+      conteoDetalle=msg.data.conteoDetalle||{};
+      configOficial=msg.data.configOficial||{};
+      monitoreo=msg.data.monitoreo||{};
+      actualizarTodo();break;
+
+    case 'colegios':
+      colegios=msg.data||{};
+      actualizarResumenesGlobales();renderConteoColegio();renderColegios();renderConfigurar();break;
+
+    case 'candidatos':
+      const cdx=msg.data||{};
+      candidatos=Object.entries(cdx).map(([id,c])=>({id,...c}));
+      actualizarCargos();actualizarTotalesBU();actualizarTotalesCO();renderConteoColegio();renderConfigurar();break;
+
+    case 'voto_bu':
+      if(!bocaUrna[msg.colegioId])bocaUrna[msg.colegioId]={};
+      bocaUrna[msg.colegioId]=msg.data||{};
+      actualizarTotalesBU();actualizarResumenesGlobales();actualizarParticipacionGlobal();renderColegios();break;
+
+    case 'voto_oficial':
+      if(!conteoDetalle[msg.colegioId])conteoDetalle[msg.colegioId]={};
+      conteoDetalle[msg.colegioId]=msg.data||{};
+      actualizarTotalesCO();actualizarResumenesGlobales();renderConteoColegio();renderColegios();break;
+
+    case 'monitoreo':
+      monitoreo[msg.colegioId]=msg.data||{};
+      actualizarParticipacionGlobal();renderColegios();break;
+
+    case 'config_oficial':
+      configOficial[msg.colegioId]=msg.data||{cantMesas:0,electores:0};
+      renderConteoColegio();
+      break;
+  }
+}
+
+function actualizarTodo(){
+  actualizarCargos();
+  actualizarResumenesGlobales();
+  actualizarParticipacionGlobal();
+  actualizarTotalesBU();
+  actualizarTotalesCO();
+  renderConteoColegio();
+  renderColegios();
+  renderConfigurar();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RESÚMENES GLOBALES
+═══════════════════════════════════════════════════════════════ */
+function actualizarResumenesGlobales(){
+  let tBU=0,tCO=0;
+  Object.values(bocaUrna).forEach(c=>{if(!c||typeof c!=='object')return;Object.values(c).forEach(v=>{if(typeof v==='number')tBU+=v;});});
+  Object.values(conteoDetalle).forEach(c=>{if(!c||typeof c!=='object')return;Object.values(c).forEach(m=>{if(!m||typeof m!=='object')return;Object.values(m).forEach(v=>{if(typeof v==='number')tCO+=v;});});});
+  document.getElementById('totalVotosGlobal').textContent=tBU;
+  document.getElementById('totalVotosOficialGlobal').textContent=tCO;
+  const activos=Object.keys(bocaUrna).filter(id=>{const v=bocaUrna[id];return v&&Object.values(v).some(x=>typeof x==='number'&&x>0);}).length;
+  const total=Object.keys(colegios).length;
+  document.getElementById('totalColegiosActivos').textContent=activos+(total>0?' / '+total:'');
+  document.getElementById('totalColegiosSub').textContent=total>0?'de '+total+' configurados':'sin colegios';
+  const conCO=Object.keys(conteoDetalle).filter(id=>{const d=conteoDetalle[id];if(!d)return false;for(let cid in d)for(let m in d[cid])if(d[cid][m]>0)return true;return false;}).length;
+  document.getElementById('totalColegiosOficial').textContent=conCO;
+  document.getElementById('totalColegiosOficialSub').textContent='con datos oficiales';
+}
+
+function actualizarParticipacionGlobal(){
+  let tv=0,te=0;
+  Object.values(monitoreo).forEach(m=>{
+    if(m&&m.electores)te+=m.electores;
+    if(m&&m.mesas)Object.values(m.mesas).forEach(x=>{if(x&&x.votantes)tv+=x.votantes;});
+  });
+  te=TOTAL_HABILITADOS_GENERAL||te;
+  const pb=document.getElementById('bu-partBox');
+  if(te>0){pb.style.display='block';const pct=((tv/te)*100).toFixed(1);document.getElementById('bu-partVal').textContent=pct+'%';document.getElementById('bu-partDetail').textContent=`${tv} votantes de ${te} electores habilitados`;document.getElementById('bu-partBar').style.width=pct+'%';}
+  else pb.style.display='none';
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CARGOS (CHIPS)
+═══════════════════════════════════════════════════════════════ */
+function actualizarCargos(){
+  const cargos=[...new Set(candidatos.map(c=>c.cargo))];
+  if(!filtroBU&&cargos.length)filtroBU=cargos[0];
+  if(!filtroCO&&cargos.length)filtroCO=cargos[0];
+  const buDiv=document.getElementById('bu-cargos');
+  if(buDiv)buDiv.innerHTML=cargos.map(c=>`<div class="chip ${c===filtroBU?'active':''}" onclick="setFiltroBU('${c}')">${c}</div>`).join('');
+  const coDiv=document.getElementById('co-cargos');
+  if(coDiv)coDiv.innerHTML=cargos.map(c=>`<div class="chip ${c===filtroCO?'active':''}" onclick="setFiltroCO('${c}')">${c}</div>`).join('');
+}
+function setFiltroBU(cargo){filtroBU=cargo;actualizarTotalesBU();document.querySelectorAll('#bu-cargos .chip').forEach(ch=>{ch.textContent===cargo?ch.classList.add('active'):ch.classList.remove('active');});}
+function setFiltroCO(cargo){filtroCO=cargo;actualizarTotalesCO();document.querySelectorAll('#co-cargos .chip').forEach(ch=>{ch.textContent===cargo?ch.classList.add('active'):ch.classList.remove('active');});}
+
+/* ═══════════════════════════════════════════════════════════════
+   BOCA DE URNA CONSOLIDADA
+═══════════════════════════════════════════════════════════════ */
+function getVotosBUAcumulados(){
+  const vpc={};
+  Object.values(bocaUrna).forEach(col=>{
+    if(!col||typeof col!=='object')return;
+    Object.entries(col).forEach(([cid,v])=>{vpc[cid]=(vpc[cid]||0)+(typeof v==='number'?v:0);});
+  });
+  return vpc;
+}
+function actualizarTotalesBU(){
+  if(!filtroBU)return;
+  const vpc=getVotosBUAcumulados();
+  const filtrados=candidatos.filter(c=>c.cargo===filtroBU);
+  const total=filtrados.reduce((a,c)=>a+(vpc[c.id]||0),0);
+  document.getElementById('bu-cargoLbl').textContent=filtroBU.toUpperCase();
+  document.getElementById('bu-total').textContent=total;
+  renderGraficoBU(filtrados,vpc,total);renderRankingBU(filtrados,vpc,total);renderDifBU(filtrados,vpc,total);
+}
+function renderGraficoBU(fl,vpc,total){
+  const ctx=document.getElementById('bu-grafico');if(!ctx)return;
+  if(graficoBU){graficoBU.destroy();graficoBU=null;}
+  graficoBU=new Chart(ctx,{type:'bar',data:{labels:fl.map(c=>c.nombre),datasets:[{data:fl.map(c=>vpc[c.id]||0),backgroundColor:fl.map(c=>colorHex(c.partido)),borderRadius:8}]},options:{responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>{const pct=total>0?((ctx.raw/total)*100).toFixed(1):0;return ` ${ctx.raw} votos (${pct}%)`;}}}},scales:{y:{beginAtZero:true}}}});
+}
+function renderRankingBU(fl,vpc,total){
+  const area=document.getElementById('bu-ranking');
+  const ord=[...fl].sort((a,b)=>(vpc[b.id]||0)-(vpc[a.id]||0));
+  const maxV=ord[0]?(vpc[ord[0].id]||1):1;
+  area.innerHTML=ord.map((c,i)=>{const v=vpc[c.id]||0;const pct=total>0?((v/total)*100).toFixed(1):'0.0';const bw=((v/maxV)*100).toFixed(1);const rc=i===0?'f':i===1?'s':i===2?'t':'';
+    return `<div class="rank-item"><div class="rank-num ${rc}">#${i+1}</div><div class="rank-info"><div class="rank-name">${esc(c.nombre)}</div><div class="rank-sub">${esc(c.partido)}</div><div class="rank-bar-wrap"><div class="rank-bar-fill" style="width:${bw}%;background:${colorHex(c.partido)}"></div></div></div><div class="rank-nums"><div class="rank-v">${v}</div><div class="rank-p">${pct}%</div></div></div>`;
+  }).join('');
+  if(!ord.length)area.innerHTML='<div class="empty-msg">Sin candidatos para este cargo.</div>';
+}
+function renderDifBU(fl,vpc,total){
+  const area=document.getElementById('bu-dif');
+  const ord=[...fl].sort((a,b)=>(vpc[b.id]||0)-(vpc[a.id]||0));
+  if(ord.length<2){area.innerHTML='<p class="text-muted text-center">Se necesitan al menos 2 candidatos.</p>';return;}
+  const p1=ord[0],p2=ord[1];const v1=vpc[p1.id]||0,v2=vpc[p2.id]||0;
+  const pct1=total>0?((v1/total)*100).toFixed(1):0,pct2=total>0?((v2/total)*100).toFixed(1):0;
+  area.innerHTML=`<div class="dif-cards"><div class="dif-card" style="background:${colorHex(p1.partido)}18"><div class="dc-lbl">1° ${esc(p1.nombre)}</div><div class="dc-pct" style="color:${colorHex(p1.partido)}">${pct1}%</div><div class="dc-v">${v1} votos</div></div><div class="dif-card" style="background:${colorHex(p2.partido)}18"><div class="dc-lbl">2° ${esc(p2.nombre)}</div><div class="dc-pct" style="color:${colorHex(p2.partido)}">${pct2}%</div><div class="dc-v">${v2} votos</div></div></div><div class="dif-resultado"><strong>${esc(p1.nombre)}</strong> lidera por <strong>${v1-v2} votos (${(pct1-pct2).toFixed(1)} puntos)</strong></div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CONTEO OFICIAL CONSOLIDADO
+═══════════════════════════════════════════════════════════════ */
+function getVotosOficialAcumulados(){
+  const vo={};
+  Object.values(conteoDetalle).forEach(col=>{
+    if(!col||typeof col!=='object')return;
+    Object.entries(col).forEach(([cid,mesas])=>{
+      let t=0;Object.values(mesas).forEach(v=>{if(typeof v==='number')t+=v;});
+      if(t>0)vo[cid]=(vo[cid]||0)+t;
+    });
+  });
+  return vo;
+}
+function actualizarTotalesCO(){
+  if(!filtroCO)return;
+  const vo=getVotosOficialAcumulados();
+  const filtrados=candidatos.filter(c=>c.cargo===filtroCO);
+  const total=filtrados.reduce((a,c)=>a+(vo[c.id]||0),0);
+  document.getElementById('co-cargoLbl').textContent=filtroCO.toUpperCase();
+  document.getElementById('co-total').textContent=total;
+  renderGraficoCO(filtrados,vo,total);renderRankingCO(filtrados,vo,total);renderDifCO(filtrados,vo,total);
+  let tv=0,te=0;
+  Object.values(monitoreo).forEach(m=>{if(m&&m.electores)te+=m.electores;if(m&&m.mesas)Object.values(m.mesas).forEach(x=>{if(x&&x.votantes)tv+=x.votantes;});});
+  te=TOTAL_HABILITADOS_GENERAL||te;
+  const pb=document.getElementById('co-partBox');
+  if(te>0){pb.style.display='block';const pct=((tv/te)*100).toFixed(1);document.getElementById('co-partVal').textContent=pct+'%';document.getElementById('co-partDetail').textContent=`${tv} votantes de ${te} electores`;document.getElementById('co-partBar').style.width=pct+'%';}
+  else pb.style.display='none';
+}
+function renderGraficoCO(fl,vo,total){
+  const ctx=document.getElementById('co-grafico');if(!ctx)return;
+  if(graficoCO){graficoCO.destroy();graficoCO=null;}
+  graficoCO=new Chart(ctx,{type:'bar',data:{labels:fl.map(c=>c.nombre),datasets:[{data:fl.map(c=>vo[c.id]||0),backgroundColor:fl.map(c=>colorHex(c.partido)),borderRadius:8}]},options:{responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>{const pct=total>0?((ctx.raw/total)*100).toFixed(1):0;return ` ${ctx.raw} votos (${pct}%)`;}}}},scales:{y:{beginAtZero:true}}}});
+}
+function renderRankingCO(fl,vo,total){
+  const area=document.getElementById('co-ranking');
+  const ord=[...fl].sort((a,b)=>(vo[b.id]||0)-(vo[a.id]||0));const maxV=ord[0]?(vo[ord[0].id]||1):1;
+  area.innerHTML=ord.map((c,i)=>{const v=vo[c.id]||0;const pct=total>0?((v/total)*100).toFixed(1):'0.0';const bw=((v/maxV)*100).toFixed(1);const rc=i===0?'f':i===1?'s':i===2?'t':'';
+    return `<div class="rank-item"><div class="rank-num ${rc}">#${i+1}</div><div class="rank-info"><div class="rank-name">${esc(c.nombre)}</div><div class="rank-sub">${esc(c.partido)}</div><div class="rank-bar-wrap"><div class="rank-bar-fill" style="width:${bw}%;background:${colorHex(c.partido)}"></div></div></div><div class="rank-nums"><div class="rank-v">${v}</div><div class="rank-p">${pct}%</div></div></div>`;
+  }).join('');
+  if(!ord.length)area.innerHTML='<div class="empty-msg">Sin candidatos para este cargo.</div>';
+}
+function renderDifCO(fl,vo,total){
+  const area=document.getElementById('co-dif');
+  const ord=[...fl].sort((a,b)=>(vo[b.id]||0)-(vo[a.id]||0));
+  if(ord.length<2){area.innerHTML='<p class="text-muted text-center">Se necesitan al menos 2 candidatos.</p>';return;}
+  const p1=ord[0],p2=ord[1];const v1=vo[p1.id]||0,v2=vo[p2.id]||0;
+  const pct1=total>0?((v1/total)*100).toFixed(1):0,pct2=total>0?((v2/total)*100).toFixed(1):0;
+  area.innerHTML=`<div class="dif-cards"><div class="dif-card" style="background:${colorHex(p1.partido)}18"><div class="dc-lbl">1° ${esc(p1.nombre)}</div><div class="dc-pct" style="color:${colorHex(p1.partido)}">${pct1}%</div><div class="dc-v">${v1} votos</div></div><div class="dif-card" style="background:${colorHex(p2.partido)}18"><div class="dc-lbl">2° ${esc(p2.nombre)}</div><div class="dc-pct" style="color:${colorHex(p2.partido)}">${pct2}%</div><div class="dc-v">${v2} votos</div></div></div><div class="dif-resultado"><strong>${esc(p1.nombre)}</strong> lidera por <strong>${v1-v2} votos (${(pct1-pct2).toFixed(1)} puntos)</strong></div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CONTEO OFICIAL POR COLEGIO
+═══════════════════════════════════════════════════════════════ */
+function getVotosOficialColegio(colId){
+  const vo={};
+  const detalle=conteoDetalle[colId]||{};
+  Object.entries(detalle).forEach(([cid,mesas])=>{
+    let t=0;
+    if(mesas&&typeof mesas==='object')Object.values(mesas).forEach(v=>{if(typeof v==='number')t+=v;});
+    vo[cid]=t;
+  });
+  return vo;
+}
+function getMesasReportadasColegio(colId){
+  const mesas=new Set();
+  const detalle=conteoDetalle[colId]||{};
+  Object.values(detalle).forEach(m=>{
+    if(!m||typeof m!=='object')return;
+    Object.entries(m).forEach(([mesa,v])=>{if(typeof v==='number'&&v>0)mesas.add(String(mesa));});
+  });
+  return mesas;
+}
+function actualizarSelectorConteoColegio(){
+  const sel=document.getElementById('ccol-select');if(!sel)return;
+  const lista=Object.entries(colegios);
+  if(!lista.length){sel.innerHTML='<option value="">Sin colegios configurados</option>';colegioConteoId=null;return;}
+  if(!colegioConteoId||!colegios[colegioConteoId])colegioConteoId=lista[0][0];
+  sel.innerHTML=lista.map(([id,c])=>`<option value="${id}" ${id===colegioConteoId?'selected':''}>${esc(c.nombre||id)}</option>`).join('');
+}
+function setColegioConteo(id){colegioConteoId=id;renderConteoColegio();}
+function setFiltroColegioCO(cargo){
+  filtroColegioCO=cargo;
+  renderConteoColegio();
+}
+function renderConteoColegio(){
+  const root=document.getElementById('tab-conteoColegio');if(!root)return;
+  actualizarSelectorConteoColegio();
+  const meta=document.getElementById('ccol-meta');
+  const cargos=[...new Set(candidatos.map(c=>c.cargo))];
+  if(!filtroColegioCO&&cargos.length)filtroColegioCO=cargos[0];
+  if(filtroColegioCO&&!cargos.includes(filtroColegioCO))filtroColegioCO=cargos[0]||null;
+  const chips=document.getElementById('ccol-cargos');
+  if(chips)chips.innerHTML=cargos.map(c=>`<div class="chip ${c===filtroColegioCO?'active':''}" onclick="setFiltroColegioCO('${c}')">${esc(c)}</div>`).join('');
+  renderResumenConteoColegios();
+
+  if(!colegioConteoId||!colegios[colegioConteoId]){
+    document.getElementById('ccol-total').textContent='0';
+    document.getElementById('ccol-mesas').textContent='0';
+    document.getElementById('ccol-ranking').innerHTML='<div class="empty-msg">No hay colegio seleccionado.</div>';
+    document.getElementById('ccol-dif').innerHTML='<div class="empty-msg">No hay colegio seleccionado.</div>';
+    if(meta)meta.textContent='No hay colegios configurados.';
+    if(graficoColegioCO){graficoColegioCO.destroy();graficoColegioCO=null;}
+    return;
+  }
+
+  const vo=getVotosOficialColegio(colegioConteoId);
+  const mesas=getMesasReportadasColegio(colegioConteoId);
+  const cfg=configOficial[colegioConteoId]||{cantMesas:0,electores:0};
+  const totalColegio=candidatos.reduce((a,c)=>a+(vo[c.id]||0),0);
+  const totalMesas=cfg.cantMesas||0;
+  document.getElementById('ccol-total').textContent=totalColegio;
+  document.getElementById('ccol-totalSub').textContent=esc(colegios[colegioConteoId].nombre||colegioConteoId);
+  document.getElementById('ccol-mesas').textContent=mesas.size+(totalMesas?` / ${totalMesas}`:'');
+  document.getElementById('ccol-mesasSub').textContent=totalMesas?'mesas reportadas':'mesas con votos';
+  if(meta){
+    const pct=cfg.electores>0?((totalColegio/cfg.electores)*100).toFixed(1):'0.0';
+    meta.innerHTML=`<strong>${esc(colegios[colegioConteoId].nombre||colegioConteoId)}</strong> aporta <strong>${totalColegio}</strong> votos oficiales al conteo final. ${cfg.electores?`Participación oficial: <strong>${pct}%</strong> de ${cfg.electores} electores.`:'Sin electores configurados.'}`;
+  }
+
+  if(!filtroColegioCO){document.getElementById('ccol-ranking').innerHTML='<div class="empty-msg">No hay candidatos configurados.</div>';return;}
+  const filtrados=candidatos.filter(c=>c.cargo===filtroColegioCO);
+  const totalCargo=filtrados.reduce((a,c)=>a+(vo[c.id]||0),0);
+  document.getElementById('ccol-cargoLbl').textContent=filtroColegioCO.toUpperCase();
+  document.getElementById('ccol-cargoTotal').textContent=totalCargo;
+  renderGraficoColegioCO(filtrados,vo,totalCargo);
+  renderRankingColegioCO(filtrados,vo,totalCargo);
+  renderDifColegioCO(filtrados,vo,totalCargo);
+}
+function renderGraficoColegioCO(fl,vo,total){
+  const ctx=document.getElementById('ccol-grafico');if(!ctx)return;
+  if(graficoColegioCO){graficoColegioCO.destroy();graficoColegioCO=null;}
+  graficoColegioCO=new Chart(ctx,{type:'bar',data:{labels:fl.map(c=>c.nombre),datasets:[{data:fl.map(c=>vo[c.id]||0),backgroundColor:fl.map(c=>colorHex(c.partido)),borderRadius:8}]},options:{responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>{const pct=total>0?((ctx.raw/total)*100).toFixed(1):0;return ` ${ctx.raw} votos (${pct}%)`;}}}},scales:{y:{beginAtZero:true}}}});
+}
+function renderRankingColegioCO(fl,vo,total){
+  const area=document.getElementById('ccol-ranking');if(!area)return;
+  const ord=[...fl].sort((a,b)=>(vo[b.id]||0)-(vo[a.id]||0));const maxV=ord[0]?(vo[ord[0].id]||1):1;
+  area.innerHTML=ord.map((c,i)=>{const v=vo[c.id]||0;const pct=total>0?((v/total)*100).toFixed(1):'0.0';const bw=((v/maxV)*100).toFixed(1);const rc=i===0?'f':i===1?'s':i===2?'t':'';
+    return `<div class="rank-item"><div class="rank-num ${rc}">#${i+1}</div><div class="rank-info"><div class="rank-name">${esc(c.nombre)}</div><div class="rank-sub">${esc(c.partido)}</div><div class="rank-bar-wrap"><div class="rank-bar-fill" style="width:${bw}%;background:${colorHex(c.partido)}"></div></div></div><div class="rank-nums"><div class="rank-v">${v}</div><div class="rank-p">${pct}%</div></div></div>`;
+  }).join('');
+  if(!ord.length)area.innerHTML='<div class="empty-msg">Sin candidatos para este cargo.</div>';
+}
+function renderDifColegioCO(fl,vo,total){
+  const area=document.getElementById('ccol-dif');if(!area)return;
+  const ord=[...fl].sort((a,b)=>(vo[b.id]||0)-(vo[a.id]||0));
+  if(ord.length<2){area.innerHTML='<p class="text-muted text-center">Se necesitan al menos 2 candidatos.</p>';return;}
+  const p1=ord[0],p2=ord[1];const v1=vo[p1.id]||0,v2=vo[p2.id]||0;
+  const pct1=total>0?((v1/total)*100).toFixed(1):0,pct2=total>0?((v2/total)*100).toFixed(1):0;
+  area.innerHTML=`<div class="dif-cards"><div class="dif-card" style="background:${colorHex(p1.partido)}18"><div class="dc-lbl">1° ${esc(p1.nombre)}</div><div class="dc-pct" style="color:${colorHex(p1.partido)}">${pct1}%</div><div class="dc-v">${v1} votos</div></div><div class="dif-card" style="background:${colorHex(p2.partido)}18"><div class="dc-lbl">2° ${esc(p2.nombre)}</div><div class="dc-pct" style="color:${colorHex(p2.partido)}">${pct2}%</div><div class="dc-v">${v2} votos</div></div></div><div class="dif-resultado"><strong>${esc(p1.nombre)}</strong> lidera por <strong>${v1-v2} votos (${(pct1-pct2).toFixed(1)} puntos)</strong></div>`;
+}
+function renderResumenConteoColegios(){
+  const area=document.getElementById('ccol-resumenGlobal');if(!area)return;
+  const rows=Object.entries(colegios).map(([id,col])=>{
+    const vo=getVotosOficialColegio(id);
+    const total=candidatos.reduce((a,c)=>a+(vo[c.id]||0),0);
+    const mesas=getMesasReportadasColegio(id).size;
+    const cfg=configOficial[id]||{cantMesas:0,electores:0};
+    return {id,nombre:col.nombre||id,total,mesas,cantMesas:cfg.cantMesas||0};
+  }).sort((a,b)=>b.total-a.total);
+  if(!rows.length){area.innerHTML='<div class="empty-msg">No hay colegios configurados.</div>';return;}
+  area.innerHTML=`<table class="sum-table"><thead><tr><th>Colegio</th><th>Votos</th><th>Mesas</th></tr></thead><tbody>${rows.map(r=>`<tr><td><strong>${esc(r.nombre)}</strong></td><td class="td-pct">${r.total}</td><td>${r.mesas}${r.cantMesas?` / ${r.cantMesas}`:''}</td></tr>`).join('')}</tbody></table>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   COLEGIOS (VISTA POR LOCAL)
+═══════════════════════════════════════════════════════════════ */
+function renderColegios(){
+  const area=document.getElementById('col-lista');if(!area)return;
+  const lista=Object.entries(colegios);
+  if(!lista.length){area.innerHTML='<div class="empty-msg">No hay colegios configurados.<br>Agregue en ⚙️ Configurar.</div>';return;}
+  area.innerHTML='';
+  lista.forEach(([colId,col])=>{
+    const votosCol=bocaUrna[colId]||{};
+    const monCol=monitoreo[colId]||{};
+    const detalleCol=conteoDetalle[colId]||{};
+    const tBU=Object.values(votosCol).reduce((a,v)=>a+(typeof v==='number'?v:0),0);
+    let tCO=0;Object.values(detalleCol).forEach(m=>{Object.values(m).forEach(v=>{if(typeof v==='number')tCO+=v;});});
+    const elec=monCol.electores||0;
+    const votantes=Object.values(monCol.mesas||{}).reduce((a,m)=>a+(m.votantes||0),0);
+    const pctCol=elec>0?((votantes/elec)*100).toFixed(1):null;
+    const activo=tBU>0||tCO>0||votantes>0;
+    let html=`<div class="col-card ${activo?'activo':''}">
+      <div class="col-header"><div class="col-dot" style="background:${activo?'var(--green)':'var(--muted)'}"></div>
+      <div class="col-nombre">${esc(col.nombre||colId)}</div>
+      <span class="status-badge ${activo?'sb-green':'sb-gray'}">${activo?'● Activo':'Sin datos'}</span></div>
+      <div class="mini-stats"><div class="mini-stat"><div class="ms-lbl">Votos BU</div><div class="ms-val">${tBU}</div></div>
+      <div class="mini-stat"><div class="ms-lbl">Votos Oficiales</div><div class="ms-val">${tCO}</div></div></div>`;
+    if(pctCol!==null){html+=`<div style="margin-bottom:10px;"><div class="prog-wrap" style="background:var(--border);">
+      <div class="prog-fill" style="width:${pctCol}%;background:var(--green);"></div></div>
+      <div class="text-muted text-center" style="font-size:11px;margin-top:4px;">${votantes} de ${elec} electores (${pctCol}%)</div></div>`;}
+    const topCands=candidatos.map(c=>({...c,votos:votosCol[c.id]||0})).filter(c=>c.votos>0).sort((a,b)=>b.votos-a.votos).slice(0,3);
+    if(topCands.length){
+      html+=`<div style="border-top:1px solid var(--border);padding-top:10px;"><div class="text-muted" style="font-size:11px;margin-bottom:8px;font-weight:600;">TOP BOCA DE URNA</div>`;
+      topCands.forEach(c=>{const pct=tBU>0?((c.votos/tBU)*100).toFixed(1):'0';html+=`<div class="cand-mini-row"><div style="width:8px;height:8px;border-radius:50%;background:${colorHex(c.partido)};flex-shrink:0;"></div><div style="flex:1;font-size:12px;font-weight:600;">${esc(c.nombre)}</div><div style="font-size:13px;font-weight:800;">${c.votos}</div><div style="font-size:11px;color:var(--muted);width:42px;text-align:right;">${pct}%</div></div>`;});
+      html+=`</div>`;
+    }
+    html+=`</div>`;
+    area.innerHTML+=html;
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CONFIGURAR — CRUD
+═══════════════════════════════════════════════════════════════ */
+function renderConfigurar(){
+  const colEl=document.getElementById('cfg-listaColegios');
+  if(colEl){
+    const cols=Object.entries(colegios);
+    colEl.innerHTML=cols.length===0?'<p class="text-muted" style="font-size:13px;margin-bottom:10px;">Sin colegios aún.</p>':
+      cols.map(([id,c])=>`<div class="cfg-item"><div class="cfg-info"><div class="cfg-name">${esc(c.nombre||id)}</div></div>
+      <button class="btn-red" style="width:auto;padding:7px 12px;font-size:12px;" onclick="eliminarColegio('${id}')">🗑️</button></div>`).join('');
+  }
+  const candEl=document.getElementById('cfg-listaCands');
+  if(candEl){
+    candEl.innerHTML=candidatos.length===0?'<p class="text-muted" style="font-size:13px;margin-bottom:10px;">Sin candidatos aún.</p>':
+      candidatos.map(c=>`<div class="cfg-item"><div class="cfg-info"><div class="cfg-name">${esc(c.nombre)}</div><div class="cfg-sub">${esc(c.partido)} · ${c.cargo}</div></div>
+      <button class="btn-red" style="width:auto;padding:7px 12px;font-size:12px;" onclick="eliminarCandidato('${c.id}')">🗑️</button></div>`).join('');
+  }
+}
+
+function agregarColegio(){
+  const nombre=document.getElementById('cfg-colNombre').value.trim();
+  if(!nombre){gbToast('Ingrese el nombre del colegio');return;}
+  API.addColegio(nombre).then(()=>{document.getElementById('cfg-colNombre').value='';gbToast('Colegio agregado ✓');}).catch(e=>gbToast('Error: '+e.message));
+}
+function eliminarColegio(id){
+  gbConfirm('¿Eliminar este colegio? Se borrarán sus datos.').then(ok=>{if(ok)API.delColegio(id).then(()=>gbToast('Colegio eliminado')).catch(e=>gbToast('Error: '+e.message));});
+}
+function agregarCandidato(){
+  const partido=document.getElementById('cfg-candPartido').value.trim();
+  const nombre=document.getElementById('cfg-candNombre').value.trim();
+  const cargo=document.getElementById('cfg-candCargo').value;
+  if(!partido||!nombre||!cargo){gbToast('Complete todos los campos');return;}
+  API.addCandidato(partido,nombre,cargo).then(()=>{
+    document.getElementById('cfg-candPartido').value='';
+    document.getElementById('cfg-candNombre').value='';
+    document.getElementById('cfg-candCargo').value='';
+    gbToast('Candidato agregado ✓');
+  }).catch(e=>gbToast('Error: '+e.message));
+}
+function eliminarCandidato(id){
+  gbConfirm('¿Eliminar este candidato? Se borrarán sus votos en todos los colegios.').then(ok=>{if(ok)API.delCandidato(id).then(()=>gbToast('Candidato eliminado')).catch(e=>gbToast('Error: '+e.message));});
+}
+function reiniciarTodo(){
+  gbConfirm('¿Borrar TODOS los datos? Esta acción NO se puede deshacer.').then(ok=>{
+    if(!ok)return;
+    API.reiniciarTodo().then(()=>{gbToast('Sistema reiniciado');setTimeout(()=>location.reload(),1500);}).catch(e=>gbToast('Error: '+e.message));
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   INFORMES
+═══════════════════════════════════════════════════════════════ */
+const reportesRenderizados={};
+function getVotantesMonitoreoGlobal(){
+  let total=0;
+  Object.values(monitoreo).forEach(m=>{
+    if(m&&m.mesas)Object.values(m.mesas).forEach(x=>{total+=x&&typeof x.votantes==='number'?x.votantes:0;});
+  });
+  return total;
+}
+function generarInformeBocaUrna(){
+  if(!candidatos.length){gbToast('No hay candidatos configurados');return;}
+  const vpc=getVotosBUAcumulados();
+  const total=candidatos.reduce((a,c)=>a+(vpc[c.id]||0),0);
+  const cargos=[...new Set(candidatos.map(c=>c.cargo))];
+  let txt=`╔══════════════════════════════╗\n   INFORME BOCA DE URNA — GIGABRAIN\n╚══════════════════════════════╝\n`;
+  txt+=`Fecha: ${new Date().toLocaleString()}\nTotal votos consultados: ${total}\n══════════════════════════════\n\n`;
+  cargos.forEach(cargo=>{
+    const grupo=candidatos.filter(c=>c.cargo===cargo).sort((a,b)=>(vpc[b.id]||0)-(vpc[a.id]||0));
+    const totG=grupo.reduce((a,c)=>a+(vpc[c.id]||0),0);
+    txt+=`▶ ${cargo.toUpperCase()} — ${totG} votos\n──────────────────────────────\n`;
+    grupo.forEach((c,i)=>{const pct=totG>0?((vpc[c.id]||0)/totG*100).toFixed(2):'0.00';txt+=`#${i+1} ${c.nombre} (${c.partido})\n   ${vpc[c.id]||0} votos — ${pct}%\n`;});
+    txt+=`\n`;
+  });
+  txt+=`══════════════════════════════\nRESUMEN POR COLEGIO\n`;
+  Object.entries(colegios).forEach(([id,col])=>{
+    const votosCol=bocaUrna[id]||{};
+    const totalCol=Object.values(votosCol).reduce((a,v)=>a+(typeof v==='number'?v:0),0);
+    txt+=`• ${col.nombre||id}: ${totalCol} votos consultados\n`;
+  });
+  const votantes=getVotantesMonitoreoGlobal();
+  const pctP=TOTAL_HABILITADOS_GENERAL>0?((votantes/TOTAL_HABILITADOS_GENERAL)*100).toFixed(2):'0.00';
+  txt+=`══════════════════════════════\nPARTICIPACIÓN ESTIMADA: ${pctP}%\n(${votantes} votantes monitoreados de ${TOTAL_HABILITADOS_GENERAL} habilitados)\n`;
+  mostrarInforme(txt);
+}
+function generarInformeOficial(){
+  if(!candidatos.length){gbToast('No hay candidatos configurados');return;}
+  const vo=getVotosOficialAcumulados();
+  const total=candidatos.reduce((a,c)=>a+(vo[c.id]||0),0);
+  const cargos=[...new Set(candidatos.map(c=>c.cargo))];
+  let txt=`╔══════════════════════════════╗\n   INFORME OFICIAL — GIGABRAIN\n╚══════════════════════════════╝\n`;
+  txt+=`Fecha: ${new Date().toLocaleString()}\nTotal votos oficiales: ${total}\n══════════════════════════════\n\n`;
+  cargos.forEach(cargo=>{
+    const grupo=candidatos.filter(c=>c.cargo===cargo).sort((a,b)=>(vo[b.id]||0)-(vo[a.id]||0));
+    const totG=grupo.reduce((a,c)=>a+(vo[c.id]||0),0);
+    txt+=`▶ ${cargo.toUpperCase()} — ${totG} votos\n──────────────────────────────\n`;
+    grupo.forEach((c,i)=>{const pct=totG>0?((vo[c.id]||0)/totG*100).toFixed(2):'0.00';txt+=`#${i+1} ${c.nombre} (${c.partido})\n   ${vo[c.id]||0} votos — ${pct}%\n`;});
+    txt+=`\n`;
+  });
+  txt+=`══════════════════════════════\nCONTEO POR COLEGIO\n`;
+  Object.entries(colegios).forEach(([id,col])=>{
+    const votosCol=getVotosOficialColegio(id);
+    const totalCol=candidatos.reduce((a,c)=>a+(votosCol[c.id]||0),0);
+    const mesas=getMesasReportadasColegio(id).size;
+    const cfg=configOficial[id]||{cantMesas:0};
+    txt+=`• ${col.nombre||id}: ${totalCol} votos`;
+    txt+=cfg.cantMesas?` — mesas ${mesas}/${cfg.cantMesas}\n`:` — mesas ${mesas}\n`;
+  });
+  const pctP=TOTAL_HABILITADOS_GENERAL>0?((total/TOTAL_HABILITADOS_GENERAL)*100).toFixed(2):'0.00';
+  txt+=`══════════════════════════════\nPARTICIPACIÓN OFICIAL: ${pctP}%\n(${total} votos oficiales de ${TOTAL_HABILITADOS_GENERAL} habilitados)\n`;
+  mostrarInforme(txt);
+}
+function mostrarInforme(txt){
+  reportesRenderizados['inf-area']=txt;
+  document.getElementById('inf-area').innerHTML=`<div class="inf-out">${esc(txt)}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;">
+      <button class="btn-green" onclick="enviarInforme('inf-area')">📲 WhatsApp</button>
+      <button class="btn-gray" onclick="copiarInforme('inf-area')">📋 Copiar</button>
+    </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   UTILIDADES
+═══════════════════════════════════════════════════════════════ */
+function showTab(id){
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  document.getElementById('nav-'+id).classList.add('active');
+  if(id==='conteoColegio')renderConteoColegio();
+  if(id==='colegios')renderColegios();
+  if(id==='configurar')renderConfigurar();
+}
+function esc(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function enviarInforme(areaId){const txt=reportesRenderizados[areaId]||'';if(!txt){gbToast('No hay informe para enviar');return;}enviarWA(txt);}
+function copiarInforme(areaId){const txt=reportesRenderizados[areaId]||'';if(!txt){gbToast('No hay informe para copiar');return;}navigator.clipboard?.writeText(txt).then(()=>gbToast('Informe copiado ✓')).catch(()=>gbToast('No se pudo copiar'));}
+function enviarWA(txt){try{window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank');}catch(e){location.href='https://wa.me/?text='+encodeURIComponent(txt);}}
+function toggleDark(){document.body.classList.toggle('dark');}
+function colorHex(p){const s=(p||'').toLowerCase();if(s.includes('anr')||s.includes('colorado'))return'#e74c3c';if(s.includes('plra')||s.includes('liberal'))return'#2980b9';if(s.includes('frente')||s.includes('pfd'))return'#27ae60';if(s.includes('pq')||s.includes('patria'))return'#e67e22';if(s.includes('cruzada'))return'#9b59b6';return'#718096';}
+
+/* INIT */
+conectarWS();
+</script>
+</body>
+</html>
