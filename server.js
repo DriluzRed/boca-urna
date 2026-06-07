@@ -9,9 +9,9 @@ const path      = require('path');
 const crypto    = require('crypto');
 const { q, getFullState, getColegioState } = require('./db');
 
-const PORT = process.env.PORT || 4010;
+const PORT = process.env.PORT || 4011;
 const MONITOR_USER = process.env.MONITOR_USER || 'admin';
-const MONITOR_PASSWORD = process.env.MONITOR_PASSWORD || 'monitor2026';
+const MONITOR_PASSWORD = process.env.MONITOR_PASSWORD || 'plra2026internas';
 const app    = express();
 const server = http.createServer(app);
 const wss    = new WebSocket.Server({ server });

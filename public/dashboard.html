@@ -331,7 +331,7 @@ function seleccionarVisibles(){visibles().forEach(c=>seleccion.add(c.id));guarda
 function limpiarSeleccion(){seleccion.clear();guardar();renderAll();}
 function toggleDrawer(show){document.getElementById('drawer').classList.toggle('show',show);}
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-function colorHex(p){const s=(p||'').toLowerCase();if(s.includes('anr')||s.includes('colorado'))return'#ef4444';if(s.includes('plra')||s.includes('liberal'))return'#3b82f6';if(s.includes('frente')||s.includes('pfd'))return'#22c55e';if(s.includes('pq')||s.includes('patria'))return'#f97316';if(s.includes('cruzada'))return'#a855f7';return'#94a3b8';}
+function colorHex(p){const s=(p||'').toLowerCase();if(s.includes('plra')||s.includes('liberal'))return'#3b82f6';if(s.includes('frente')||s.includes('pfd'))return'#22c55e';if(s.includes('pq')||s.includes('patria'))return'#f97316';if(s.includes('cruzada'))return'#a855f7';return'#94a3b8';}
 
 document.addEventListener('keydown',e=>{if(e.key==='Escape')toggleDrawer(false);if(e.key.toLowerCase()==='f'){document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen?.();}});
 conectarWS();

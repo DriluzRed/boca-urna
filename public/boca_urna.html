@@ -56,7 +56,7 @@ button:active{transform:scale(0.97)}
 .cand-card .cm input{margin:0;padding:8px;border-radius:10px;font-size:12px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.4);color:white}
 .cand-card .cm input::placeholder{color:rgba(255,255,255,.7)}
 .cand-card .cm button{padding:8px 12px;border-radius:10px;background:rgba(255,255,255,.2);color:white;font-size:11px;font-weight:700}
-.bg-anr{background:linear-gradient(135deg,#c0392b,#e74c3c)}.bg-plra{background:linear-gradient(135deg,#1a5276,#2980b9)}
+.bg-plra{background:linear-gradient(135deg,#1a5276,#2980b9)}
 .bg-frente{background:linear-gradient(135deg,#1e8449,#27ae60)}.bg-pq{background:linear-gradient(135deg,#d35400,#e67e22)}
 .bg-cruzada{background:linear-gradient(135deg,#6c3483,#9b59b6)}.bg-default{background:linear-gradient(135deg,#4a5568,#718096)}
 .mesa-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}
@@ -196,7 +196,7 @@ footer{position:fixed;bottom:0;left:0;width:100%;background:var(--card);border-t
   <div class="alert alert-green"><span class="live-dot"></span> <strong>Conteo oficial por mesa</strong> — Resultados reales</div>
   <div class="card">
     <div class="card-title">⚙️ Configuración</div>
-    <div class="mesa-meta" id="co-perfilInfo">Seleccione CAL o CVR para aplicar la distribución oficial de mesas.</div>
+    <div class="mesa-meta" id="co-perfilInfo">Seleccione AMM para aplicar la distribución oficial de mesas.</div>
     <input type="number" id="co-mesas" placeholder="Cantidad de mesas" oninput="guardarConfigMesas()">
     <input type="number" id="co-elec" placeholder="Total electores habilitados" oninput="guardarConfigMesas()">
   </div>
@@ -350,15 +350,10 @@ let filtroCargoBU='Todos';
 let chart=null;
 const reportesRenderizados={};
 
-const TOTAL_HABILITADOS_GENERAL=16229;
-const ELECTORES_MESA_BASE=350;
-const ELECTORES_MESA_FINAL=TOTAL_HABILITADOS_GENERAL-(45*ELECTORES_MESA_BASE);
+const TOTAL_HABILITADOS_GENERAL=10400;
+const ELECTORES_MESA_BASE=400;
 const PERFILES_MESAS={
-  CAL:{nombre:'CAL',mesas:Array.from({length:29},(_,i)=>({numero:i+1,electores:ELECTORES_MESA_BASE}))},
-  CVR:{nombre:'CVR',mesas:[
-    ...Array.from({length:16},(_,i)=>({numero:i+30,electores:ELECTORES_MESA_BASE})),
-    {numero:46,electores:ELECTORES_MESA_FINAL}
-  ]}
+  AMM:{nombre:'AMM',mesas:Array.from({length:26},(_,i)=>({numero:i+1,electores:ELECTORES_MESA_BASE}))}
 };
 
 /* ═══════════════════════════════════════════════════════════════
@@ -569,8 +564,7 @@ function normalizarTexto(s){
 }
 function perfilMesaActual(){
   const nombre=normalizarTexto(colegios[colegioActual]?.nombre||colegioActual||'');
-  if(nombre.includes('CVR'))return PERFILES_MESAS.CVR;
-  if(nombre.includes('CAL'))return PERFILES_MESAS.CAL;
+  if(nombre.includes('AMM'))return PERFILES_MESAS.AMM;
   return null;
 }
 function electoresPerfil(perfil){
@@ -918,8 +912,8 @@ function enviarInforme(areaId){const txt=reportesRenderizados[areaId]||'';if(!tx
 function copiarInforme(areaId){const txt=reportesRenderizados[areaId]||'';if(!txt){gbToast('No hay informe para copiar');return;}navigator.clipboard?.writeText(txt).then(()=>gbToast('Informe copiado ✓')).catch(()=>gbToast('No se pudo copiar'));}
 function enviarWA(txt){try{window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank');}catch(e){location.href='https://wa.me/?text='+encodeURIComponent(txt);}}
 function toggleDark(){document.body.classList.toggle('dark');}
-function colorClass(p){const s=(p||'').toLowerCase();if(s.includes('anr')||s.includes('colorado'))return'bg-anr';if(s.includes('plra')||s.includes('liberal'))return'bg-plra';if(s.includes('frente')||s.includes('pfd'))return'bg-frente';if(s.includes('pq')||s.includes('patria'))return'bg-pq';if(s.includes('cruzada'))return'bg-cruzada';return'bg-default';}
-function colorHex(p){const s=(p||'').toLowerCase();if(s.includes('anr')||s.includes('colorado'))return'#e74c3c';if(s.includes('plra')||s.includes('liberal'))return'#2980b9';if(s.includes('frente')||s.includes('pfd'))return'#27ae60';if(s.includes('pq')||s.includes('patria'))return'#e67e22';if(s.includes('cruzada'))return'#9b59b6';return'#718096';}
+function colorClass(p){const s=(p||'').toLowerCase();if(s.includes('plra')||s.includes('liberal'))return'bg-plra';if(s.includes('frente')||s.includes('pfd'))return'bg-frente';if(s.includes('pq')||s.includes('patria'))return'bg-pq';if(s.includes('cruzada'))return'bg-cruzada';return'bg-default';}
+function colorHex(p){const s=(p||'').toLowerCase();if(s.includes('plra')||s.includes('liberal'))return'#2980b9';if(s.includes('frente')||s.includes('pfd'))return'#27ae60';if(s.includes('pq')||s.includes('patria'))return'#e67e22';if(s.includes('cruzada'))return'#9b59b6';return'#718096';}
 
 /* ═══════════════════════════════════════════════════════════════
    INIT
